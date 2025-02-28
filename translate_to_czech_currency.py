@@ -12,7 +12,7 @@ def initialize_locale():
         try:
             import win32console 
         except:
-            print "Python Win32 Extensions module is required.\n You can download it from https://sourceforge.net/projects/pywin32 \n"
+            print ("Python Win32 Extensions module is required.\n You can download it from https://sourceforge.net/projects/pywin32 \n")
             exit(-1)
         # win32console implementation of SetConsoleCP does not return a value
         # CP_UTF8 = 65001
@@ -26,19 +26,20 @@ def initialize_locale():
     sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
-initialize_locale()
+# do this for old python
+if sys.version_info == (2,):
+    initialize_locale()
 
 def safeprint(s):
     try:
         print(s)        
-    except UnicodeEncodeError:        
+    except UnicodeEncodeError:
         if sys.version_info >= (3,):
             print(s.encode('utf8').decode(sys.stdout.encoding))
         else:
             print(s.encode('utf8'))
-    except IOError:
-        pass
-        sys.stdout.write("\n")
+    except:
+        sys.stdout.write("Error\n")
 
 #################################################
 # replaces all whitespaces to one single space
@@ -80,12 +81,12 @@ zenske = 1
 muzske = 2
 
 stotiny = lambda x: ['stě', 'sta', 'set'][((x in [3,4]) + (x in [5,6,7,8,9])*2)]
-mnoznecislonic =      lambda x: (zenske, '',       '')
-mnoznecislotisic =    lambda x: (muzske, 'tisíc',  ['', 'e', ''][((x in [2,3,4]) + (x in [5,6,7,8,9])*2)]  )
-mnoznecislomilion =   lambda x: (muzske, 'milion', ['ů', 'y', ''][((x in [2,3,4]) + (x in [1])*2)] )
-mnoznecislomiliarda = lambda x: (zenske, 'miliard',['', 'y', 'a'][((x in [2,3,4]) + (x in [1])*2)] )
-mnoznecislobilion =   lambda x: (muzske, 'bilion', ['ů', 'y', ''][((x in [2,3,4]) + (x in [1])*2)] )
-tausendfunction = [mnoznecislonic,mnoznecislotisic,mnoznecislomilion,mnoznecislomiliarda,mnoznecislobilion]
+pluralcislonic =      lambda x: (zenske, '',       '')
+pluralcislotisic =    lambda x: (muzske, 'tisíc',  ['', 'e', ''][((x in [2,3,4]) + (x in [5,6,7,8,9])*2)]  )
+pluralcislomilion =   lambda x: (muzske, 'milion', ['ů', 'y', ''][((x in [2,3,4]) + (x in [1])*2)] )
+pluralcislomiliarda = lambda x: (zenske, 'miliard',['', 'y', 'a'][((x in [2,3,4]) + (x in [1])*2)] )
+pluralcislobilion =   lambda x: (muzske, 'bilion', ['ů', 'y', ''][((x in [2,3,4]) + (x in [1])*2)] )
+tausendfunction = [pluralcislonic,pluralcislotisic,pluralcislomilion,pluralcislomiliarda,pluralcislobilion]
 
 
 def correct_rod(x, y, rod):
@@ -97,7 +98,7 @@ def correct_rod(x, y, rod):
 
 def translate(index, podtisic):
     thisnum = podtisic
-    stovky = podtisic/100
+    stovky = int(podtisic/100)
     finaltext = ''
     lastnum = 0
 
@@ -117,7 +118,7 @@ def translate(index, podtisic):
     rod, _, _ = postfixfn(lastnum)
 
     while thisnum:
-        for x, y in reversed(sorted(translatedict.iteritems(), key = lambda x: x[0])):
+        for x, y in reversed(sorted(translatedict.items(), key = lambda x: x[0])):
             if thisnum >= x:
                 thisnum -= x
                 lastnum = x
@@ -125,18 +126,18 @@ def translate(index, podtisic):
                 finaltext += y + ' '
 
     # přípona množného čísla podle poslední nalezené číslice
-    _, postfix, mnozne = postfixfn(lastnum) 
+    _, postfix, plural = postfixfn(lastnum) 
 
     #pokud neni nic ve finaltextu, nema ani smysl psat postfix (miliony, tisice)
     if finaltext == "": 
         postfix = ""
-        mnozne = ""
+        plural = ""
 
-    return finaltext + postfix + mnozne
+    return finaltext + postfix + plural
 
-def delej(num):
+def do_the_job(num):
     safeprint( num )
-    mena = [" Korun"," Koruna"][num==1]
+    currency = [" Korun"," Koruna"][num==1]
     finaltext = ''
     index = 0
     while num:
@@ -149,12 +150,13 @@ def delej(num):
 
     if finaltext == "":
         finaltext = "nula "
-    safeprint(whitespaces_to_single_space(": " + finaltext.strip() + mena) )
+    safeprint(whitespaces_to_single_space(": " + finaltext.strip() + currency) )
     safeprint( '-'* 55 )
+
 
 if __name__ == '__main__':
     testing_numbers = [0, 1, 6, 9, 23, 123, 199, 200, 1777, 1051, 1999999, 13348821,
                       10000000, 16777216, 199199199, 1205055475, 9255355400, 10255355400,
                       100000000000, 1000000000000, 100000000100000, 999999999999999, 1000000000000000]
     for i in testing_numbers:
-        delej(i)
+        do_the_job(i)

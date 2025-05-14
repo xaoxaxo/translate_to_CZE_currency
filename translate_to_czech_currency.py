@@ -1,7 +1,11 @@
 #!/usr/bin/python
-# Vypiš hodnotu slovem, tak jako to dělá česká pošta :D
 # -*- coding: UTF-8 -*-
-
+###############################################################################
+# 
+# Author        : xaoxaxo
+# Description   : (CZECH) Vypiš hodnotu slovem, tak jako to dělá česká pošta :D
+#
+###############################################################################
 import sys, codecs
 
 def initialize_locale():
@@ -48,7 +52,7 @@ def whitespaces_to_single_space (input):
 
 
 translatedict = {
-1:  'jedna'      ,
+1:  'jedna'     ,
 2:  "dvě"       ,
 3:  'tři'       ,
 4:  'čtyři'     ,
@@ -96,17 +100,18 @@ def correct_rod(x, y, rod):
         y = 'dva'
     return y
 
-def translate(index, podtisic):
-    thisnum = podtisic
-    stovky = int(podtisic/100)
+def translate(index, zbytek_po_deleni_tisic):
+    thisnum = zbytek_po_deleni_tisic
+    stovky = int(zbytek_po_deleni_tisic/100)
     finaltext = ''
     lastnum = 0
 
-    if podtisic >= 200:
+    if zbytek_po_deleni_tisic >= 200:
         finaltext += translatedict[stovky]
         finaltext += stotiny(stovky)
         finaltext += ' ' # mezerky
         thisnum -= stovky * 100
+
 
     try:
         postfixfn = tausendfunction[index]
@@ -123,6 +128,9 @@ def translate(index, podtisic):
                 thisnum -= x
                 lastnum = x
                 y = correct_rod(x, y, rod)
+                # v tabulce máme dvě, ale když je číslo npř dvacet dva, je to dva 
+                if lastnum == 2 and index == 0 and zbytek_po_deleni_tisic != 2:
+                    y = 'dva'
                 finaltext += y + ' '
 
     # přípona množného čísla podle poslední nalezené číslice
@@ -136,27 +144,36 @@ def translate(index, podtisic):
     return finaltext + postfix + plural
 
 def do_the_job(num):
-    safeprint( num )
-    currency = [" Korun"," Koruna"][num==1]
+    ori = num
+    #safeprint( num )
+    modnum = num % 1000
+    currency = [" korun"," koruna"," koruny"][(modnum == 1) - (modnum in [2,3,4])]
     finaltext = ''
     index = 0
     while num:
-        podtisic = num % 1000
-        finaltext = translate(index, podtisic) + " " + finaltext 
-        num -= podtisic
+        zbytek_po_deleni_tisic = num % 1000
+        finaltext = translate(index, zbytek_po_deleni_tisic) + " " + finaltext 
+        num -= zbytek_po_deleni_tisic
         if num:
             index += 1
             num /= 1000
 
     if finaltext == "":
         finaltext = "nula "
-    safeprint(whitespaces_to_single_space(": " + finaltext.strip() + currency) )
-    safeprint( '-'* 55 )
+    safeprint(whitespaces_to_single_space(str(ori) + " -> " + finaltext.strip() + currency) )
 
 
 if __name__ == '__main__':
-    testing_numbers = [0, 1, 6, 9, 23, 123, 199, 200, 1777, 1051, 1999999, 13348821,
-                      10000000, 16777216, 199199199, 1205055475, 9255355400, 10255355400,
-                      100000000000, 1000000000000, 100000000100000, 999999999999999, 1000000000000000]
-    for i in testing_numbers:
-        do_the_job(i)
+    if len(sys.argv) > 1:
+        try:
+            c = int(sys.argv[-1])
+            do_the_job(c)
+        except:
+            print ("špatný vstup")
+    else:
+        testing_numbers = [0, 1, 2, 3, 4, 5, 6, 9, 23, 123, 199, 200, 222, 213, 333, 432, 444, 555, 666, 777, 888, 999, 
+                        1000, 1001, 1002, 1111, 1577, 2222, 1999992, 13348821,
+                        10000010, 16777216, 199199199, 1205055475, 9255355400, 10255355400,
+                        100000000000, 1000000000000, 100000000100000, 999999999999999, 1000000000000000]
+        for i in testing_numbers:
+            do_the_job(i)
